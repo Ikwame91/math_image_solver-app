@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -104,7 +105,58 @@ class _HomePageState extends State<HomePage> {
   Future<void> sendImage(XFile? imagefile) async {
     if (imagefile == null) return;
     String base64Image = base64Encode(File(imagefile.path).readAsBytesSync());
-    String apikey = "";
+    String apikey = "AIzaSyBrh2f1QdgeaFFuwzKB73gj-LE5-_Qoxl8";
+    String requestBody = json.encode({
+      "contents": [
+        {
+          "parts": [
+            {"text": "describ ehat you see"},
+            {
+              "inlineData": {"mimeType": "image/jpeg", "data": base64Image}
+            }
+          ]
+        }
+      ],
+      "generationConfig": {
+        "temperature": 0.4,
+        "topK": 32,
+        "topP": 1,
+        "maxOutputTokens": 4096,
+        "stopSequences": []
+      },
+      "safetySettings": [
+        {
+          "category": "HARM_CATEGORY_HARASSMENT",
+          "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          "category": "HARM_CATEGORY_HATE_SPEECH",
+          "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+          "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+        }
+      ]
+    });
+    http.Response response = await http.post(
+        Uri.parse(
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro-vision-latest:generateContent?key=$apikey ",
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: requestBody);
+    if (response.statusCode == 200) {
+      print(response.body);
+      print("Image sent successfully");
+    } else {
+      print("Failed to send image");
+    }
   }
 
   @override
@@ -124,7 +176,7 @@ class _HomePageState extends State<HomePage> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            _openCamera();
+            _image == null ? _openCamera() : sendImage(_image);
           },
           tooltip: _image == null ? 'Pick Image' : 'send image',
           child: Icon(
@@ -134,19 +186,71 @@ class _HomePageState extends State<HomePage> {
         ),
         body: Stack(
           children: [
-            _image == null
-                ? const Center(
-                    child: Text(
-                      'Welcome to GemeniMaths',
-                      style: TextStyle(
-                        fontSize: 25.0,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  )
-                : Image.file(File(_image!.path))
+            SingleChildScrollView(
+              child: Column(
+                children: <Widget>[
+                  _image == null
+                      ? const Center(
+                          child: Text(
+                            'Welcome to GemeniMaths',
+                            style: TextStyle(
+                              fontSize: 25.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        )
+                      : Image.file(
+                          File(_image!.path),
+                        )
+                ],
+              ),
+            )
           ],
         ));
   }
 }
+
+
+// '{
+//   "contents": [
+//     {
+//       "parts": [
+//         {
+//           "text": "describ ehat you see"
+//         },
+//         {
+//           "inlineData": {
+//             "mimeType": "image/jpeg",
+//             "data": "'$(base64 -w0 image0.jpeg)'"
+//           }
+//         }
+//       ]
+//     }
+//   ],
+//   "generationConfig": {
+//     "temperature": 0.4,
+//     "topK": 32,
+//     "topP": 1,
+//     "maxOutputTokens": 4096,
+//     "stopSequences": []
+//   },
+//   "safetySettings": [
+//     {
+//       "category": "HARM_CATEGORY_HARASSMENT",
+//       "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+//     },
+//     {
+//       "category": "HARM_CATEGORY_HATE_SPEECH",
+//       "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+//     },
+//     {
+//       "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+//       "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+//     },
+//     {
+//       "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+//       "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+//     }
+//   ]
+// }'
