@@ -15,6 +15,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   XFile? _image;
+  String _responseBody = '';
+  bool isSending = false;
+  String customprompt = '';
+  final TextEditingController _controller = TextEditingController();
 
   //
   Future<void> getImageFromCamera() async {
@@ -103,6 +107,9 @@ class _HomePageState extends State<HomePage> {
   //           ));
   // }
   Future<void> sendImage(XFile? imagefile) async {
+    setState(() {
+      isSending = true;
+    });
     if (imagefile == null) return;
     String base64Image = base64Encode(File(imagefile.path).readAsBytesSync());
     String apikey = "AIzaSyBrh2f1QdgeaFFuwzKB73gj-LE5-_Qoxl8";
@@ -110,7 +117,11 @@ class _HomePageState extends State<HomePage> {
       "contents": [
         {
           "parts": [
-            {"text": "describ ehat you see"},
+            {
+              "text": customprompt == " "
+                  ? "Solve this maths function and write step by step details and the reason behind the step"
+                  : customprompt
+            },
             {
               "inlineData": {"mimeType": "image/jpeg", "data": base64Image}
             }
@@ -152,11 +163,20 @@ class _HomePageState extends State<HomePage> {
         },
         body: requestBody);
     if (response.statusCode == 200) {
+      Map<String, dynamic> jsonBody = json.decode(response.body);
+      setState(() {
+        _responseBody =
+            jsonBody["candidates"][0]["content"]["parts"][0]["text"];
+        isSending = false;
+      });
       print(response.body);
       print("Image sent successfully");
     } else {
-      print("Failed to send image");
+      setState(() {
+        isSending = false;
+      });
     }
+    print("Failed to send image");
   }
 
   @override
@@ -202,10 +222,41 @@ class _HomePageState extends State<HomePage> {
                         )
                       : Image.file(
                           File(_image!.path),
-                        )
+                        ),
+                  const SizedBox(
+                    height: 18,
+                  ),
+                  TextField(
+                    controller: _controller,
+                    onChanged: (value) {
+                      customprompt = value;
+                    },
+                    decoration: InputDecoration(
+                      hintText: "Enter your custom prompt",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(10),
+                    child: Text(
+                      _responseBody,
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                    ),
+                  )
                 ],
               ),
-            )
+            ),
+            if (isSending)
+              const Center(
+                  child: const CircularProgressIndicator(
+                color: Colors.blue,
+              ))
           ],
         ));
   }
