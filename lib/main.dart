@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:math_image_solver/homepage.dart';
+import 'package:math_image_solver/ui/homepage.dart';
 
 void main() {
   runApp(const MyApp());

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -168,6 +169,7 @@ class _HomePageState extends State<HomePage> {
         _responseBody =
             jsonBody["candidates"][0]["content"]["parts"][0]["text"];
         isSending = false;
+        _controller.clear();
       });
       print(response.body);
       print("Image sent successfully");
@@ -180,128 +182,91 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.grey[200],
-        appBar: AppBar(
-          title: const Text(
-            'GemeniMaths',
-            style: TextStyle(
-              fontSize: 25,
-              color: Colors.black,
-              fontWeight: FontWeight.w700,
+      backgroundColor: Colors.grey[200],
+      appBar: AppBar(
+        title: const Text(
+          'GemeniMaths',
+          style: TextStyle(
+            fontSize: 25,
+            color: Colors.black,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _image == null ? _openCamera() : sendImage(_image);
+        },
+        tooltip: _image == null ? 'Pick Image' : 'send image',
+        child: Icon(
+          _image == null ? Icons.camera_alt : Icons.send,
+          color: Colors.grey.shade900,
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView(
+              children: <Widget>[
+                _image == null
+                    ? const Center(
+                        child: Text(
+                          'Welcome to GemeniMaths',
+                          style: TextStyle(
+                            fontSize: 25.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      )
+                    : Image.file(
+                        File(_image!.path),
+                      ),
+                const SizedBox(
+                  height: 30,
+                ),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    _responseBody,
+                    style: GoogleFonts.roboto(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          centerTitle: true,
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            _image == null ? _openCamera() : sendImage(_image);
-          },
-          tooltip: _image == null ? 'Pick Image' : 'send image',
-          child: Icon(
-            _image == null ? Icons.camera_alt : Icons.send,
-            color: Colors.grey.shade900,
-          ),
-        ),
-        body: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Column(
-                children: <Widget>[
-                  _image == null
-                      ? const Center(
-                          child: Text(
-                            'Welcome to GemeniMaths',
-                            style: TextStyle(
-                              fontSize: 25.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        )
-                      : Image.file(
-                          File(_image!.path),
-                        ),
-                  const SizedBox(
-                    height: 18,
-                  ),
-                  TextField(
-                    controller: _controller,
-                    onChanged: (value) {
-                      customprompt = value;
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Enter your custom prompt",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  Container(
-                    padding: EdgeInsets.all(10),
-                    child: Text(
-                      _responseBody,
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                    ),
-                  )
-                ],
+          if (isSending)
+            const Center(
+              child: CircularProgressIndicator(
+                color: Colors.blue,
               ),
             ),
-            if (isSending)
-              const Center(
-                  child: const CircularProgressIndicator(
-                color: Colors.blue,
-              ))
-          ],
-        ));
+          Container(
+            margin: const EdgeInsets.all(20),
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: "Enter your custom prompt",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
-
-
-// '{
-//   "contents": [
-//     {
-//       "parts": [
-//         {
-//           "text": "describ ehat you see"
-//         },
-//         {
-//           "inlineData": {
-//             "mimeType": "image/jpeg",
-//             "data": "'$(base64 -w0 image0.jpeg)'"
-//           }
-//         }
-//       ]
-//     }
-//   ],
-//   "generationConfig": {
-//     "temperature": 0.4,
-//     "topK": 32,
-//     "topP": 1,
-//     "maxOutputTokens": 4096,
-//     "stopSequences": []
-//   },
-//   "safetySettings": [
-//     {
-//       "category": "HARM_CATEGORY_HARASSMENT",
-//       "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-//     },
-//     {
-//       "category": "HARM_CATEGORY_HATE_SPEECH",
-//       "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-//     },
-//     {
-//       "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-//       "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-//     },
-//     {
-//       "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-//       "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-//     }
-//   ]
-// }'
